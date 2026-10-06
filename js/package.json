@@ -1,0 +1,23 @@
+{
+  "name": "system-design-casebook",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Turns hand-wavy system-design answers into numbers: twelve classic problems, each with capacity math and a small prototype that proves the estimate.",
+  "type": "module",
+  "bin": {
+    "casebook": "src/cli.js"
+  },
+  "scripts": {
+    "test": "node --test \"test/*.test.js\"",
+    "lint": "tsc -p tsconfig.json",
+    "docs": "node src/cli.js docs",
+    "expected": "node src/cli.js expected"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.1",
+    "typescript": "7.0.2"
+  }
+}

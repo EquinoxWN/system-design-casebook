@@ -1,0 +1,9 @@
+{
+  "writes_per_day": 1000000,
+  "write_qps": 11.574074074074074,
+  "peak_read_qps": 173.61111111111111,
+  "object_storage": 109500000000000,
+  "metadata_storage": 2190000000000,
+  "peak_egress": 1736111.1111111112,
+  "app_servers": 1
+}

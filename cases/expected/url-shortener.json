@@ -1,0 +1,13 @@
+{
+  "writes_per_day": 10000000,
+  "redirects_per_day": 1000000000,
+  "write_qps": 115.74074074074075,
+  "peak_redirect_qps": 34722.222222222226,
+  "links_total": 36500000000,
+  "key_length": 6,
+  "storage_total": 54750000000000,
+  "peak_egress": 17361111.111111112,
+  "cache_memory": 100000000000,
+  "app_servers": 3,
+  "storage_nodes": 40
+}

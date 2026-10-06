@@ -1,0 +1,24 @@
+{
+  "id": "video-streaming",
+  "title": "Video streaming",
+  "summary": "Upload, transcode and stream video to hundreds of millions of viewers.",
+  "functional": ["Upload a video and transcode it into several resolutions", "Stream with adaptive bitrate", "Resume where the viewer stopped"],
+  "non_functional": ["Playback starts in under 2 s", "No re-buffering on a stable connection", "Uploads are never lost"],
+  "assumptions": {
+    "daily_active_users": { "value": 800000000, "unit": "count", "why": "A global video platform." },
+    "watch_minutes_per_user": { "value": 40, "unit": "count", "why": "Average daily watch time per active user." },
+    "playback_mbps": { "value": 2.5, "unit": "ratio", "why": "Average delivered bitrate across devices in megabits per second." },
+    "upload_hours_per_minute": { "value": 500, "unit": "hours", "why": "Hours of video uploaded every minute (the widely quoted YouTube figure)." },
+    "stored_mbps_all_renditions": { "value": 12, "unit": "ratio", "why": "Source plus every rendition, in megabits per second of video." },
+    "cpu_seconds_per_video_second": { "value": 4, "unit": "seconds", "why": "Encoding all renditions costs about four CPU seconds per second of video." },
+    "peak_to_average": { "value": 2, "unit": "ratio", "why": "Evening peaks are about twice the daily average for video." }
+  },
+  "derived": [
+    { "name": "average_concurrent_viewers", "label": "Viewers watching at the same time (average)", "formula": "daily_active_users * watch_minutes_per_user / (seconds_per_day / 60)", "unit": "count" },
+    { "name": "peak_egress", "label": "Streaming bandwidth at peak", "formula": "average_concurrent_viewers * peak_to_average * playback_mbps * 1000000", "unit": "bits/s" },
+    { "name": "video_seconds_uploaded_per_second", "label": "Seconds of video uploaded per second", "formula": "upload_hours_per_minute * 3600 / 60", "unit": "ratio" },
+    { "name": "storage_per_day", "label": "New video storage per day, with replicas", "formula": "video_seconds_uploaded_per_second * seconds_per_day * stored_mbps_all_renditions * 1000000 / 8 * replication_factor", "unit": "bytes" },
+    { "name": "transcode_cores", "label": "CPU cores busy transcoding", "formula": "video_seconds_uploaded_per_second * cpu_seconds_per_video_second", "unit": "count" }
+  ],
+  "headline": ["average_concurrent_viewers", "peak_egress", "storage_per_day", "transcode_cores"]
+}

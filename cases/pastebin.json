@@ -1,0 +1,26 @@
+{
+  "id": "pastebin",
+  "title": "Pastebin",
+  "summary": "Store text snippets and serve them back by an unguessable link.",
+  "functional": ["Upload a text paste and get a link", "Read a paste by link", "Pastes can expire; expired pastes are deleted"],
+  "non_functional": ["Read p99 under 200 ms", "Pastes are durable once acknowledged", "Links cannot be enumerated"],
+  "assumptions": {
+    "daily_active_users": { "value": 10000000, "unit": "count", "why": "A popular developer tool." },
+    "pastes_per_user_per_day": { "value": 0.1, "unit": "ratio", "why": "Most visitors read; one in ten pastes something." },
+    "paste_bytes": { "value": 10000, "unit": "bytes", "why": "Logs and code snippets average around 10 KB." },
+    "metadata_bytes": { "value": 200, "unit": "bytes", "why": "Key, owner, expiry, size and object location." },
+    "reads_per_write": { "value": 5, "unit": "ratio", "why": "Pastes are shared with a few people, not broadcast." },
+    "retention_years": { "value": 10, "unit": "count", "why": "Keep non-expiring pastes for ten years." },
+    "server_rps": { "value": 5000, "unit": "req/s", "why": "Serving 10 KB bodies from object storage through an app server." }
+  },
+  "derived": [
+    { "name": "writes_per_day", "label": "New pastes per day", "formula": "daily_active_users * pastes_per_user_per_day", "unit": "count/day" },
+    { "name": "write_qps", "label": "Uploads per second (average)", "formula": "writes_per_day / seconds_per_day", "unit": "req/s" },
+    { "name": "peak_read_qps", "label": "Reads per second at peak", "formula": "writes_per_day * reads_per_write / seconds_per_day * peak_to_average", "unit": "req/s" },
+    { "name": "object_storage", "label": "Paste bodies in object storage, with replicas", "formula": "writes_per_day * days_per_year * retention_years * paste_bytes * replication_factor", "unit": "bytes" },
+    { "name": "metadata_storage", "label": "Metadata database, with replicas", "formula": "writes_per_day * days_per_year * retention_years * metadata_bytes * replication_factor", "unit": "bytes" },
+    { "name": "peak_egress", "label": "Read bandwidth at peak", "formula": "peak_read_qps * paste_bytes", "unit": "bytes/s" },
+    { "name": "app_servers", "label": "App servers", "formula": "ceil(peak_read_qps * (1 + 1 / reads_per_write) / (server_rps * headroom))", "unit": "servers" }
+  ],
+  "headline": ["peak_read_qps", "object_storage", "metadata_storage", "peak_egress", "app_servers"]
+}

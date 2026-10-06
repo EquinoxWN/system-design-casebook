@@ -1,0 +1,7 @@
+{
+  "request_qps": 57870.37037037037,
+  "peak_qps": 173611.11111111112,
+  "counter_memory": 4000000000,
+  "store_ops": 173611.11111111112,
+  "store_shards": 3
+}

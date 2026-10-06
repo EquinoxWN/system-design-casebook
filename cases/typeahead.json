@@ -1,0 +1,24 @@
+{
+  "id": "typeahead",
+  "title": "Search typeahead",
+  "summary": "Suggest the most popular completions while a user types a search query.",
+  "functional": ["Return the top 10 completions for a prefix", "Rank by recent popularity", "Update rankings from new searches within hours"],
+  "non_functional": ["p99 under 100 ms, since a request goes out on every keystroke", "Suggestions may be slightly stale", "No offensive completions"],
+  "assumptions": {
+    "daily_active_users": { "value": 500000000, "unit": "count", "why": "A major search engine." },
+    "searches_per_user_per_day": { "value": 5, "unit": "ratio", "why": "Typical searches per user per day." },
+    "keystrokes_per_search": { "value": 8, "unit": "ratio", "why": "About eight characters typed before choosing a suggestion." },
+    "debounce_ratio": { "value": 0.5, "unit": "ratio", "why": "Clients wait 100 ms between keystrokes, halving requests." },
+    "unique_queries": { "value": 100000000, "unit": "count", "why": "Distinct queries worth suggesting after filtering rare ones." },
+    "prefixes_per_query": { "value": 20, "unit": "ratio", "why": "Average query length, each prefix storing its top 10." },
+    "bytes_per_prefix_entry": { "value": 50, "unit": "bytes", "why": "Prefix node plus pointers to its top 10 completions." },
+    "server_rps": { "value": 50000, "unit": "req/s", "why": "In-memory prefix lookup per node." }
+  },
+  "derived": [
+    { "name": "requests_per_day", "label": "Suggestion requests per day", "formula": "daily_active_users * searches_per_user_per_day * keystrokes_per_search * debounce_ratio", "unit": "count/day" },
+    { "name": "peak_qps", "label": "Suggestion requests per second at peak", "formula": "requests_per_day / seconds_per_day * peak_to_average", "unit": "req/s" },
+    { "name": "index_memory", "label": "Prefix index in memory (one copy)", "formula": "unique_queries * prefixes_per_query * bytes_per_prefix_entry", "unit": "bytes" },
+    { "name": "servers", "label": "Suggestion servers", "formula": "ceil(peak_qps / (server_rps * headroom))", "unit": "servers" }
+  ],
+  "headline": ["peak_qps", "index_memory", "servers"]
+}

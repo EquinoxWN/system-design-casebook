@@ -1,0 +1,9 @@
+{
+  "peak_qps": 34722.222222222226,
+  "peak_push_qps": 24305.55555555556,
+  "sms_per_day": 50000000,
+  "sms_cost_per_day": 375000,
+  "email_cost_per_day": 25000,
+  "log_storage": 90000000000000,
+  "workers": 25
+}

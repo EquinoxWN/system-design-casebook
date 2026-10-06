@@ -1,0 +1,24 @@
+{
+  "id": "file-sync",
+  "title": "File sync and storage",
+  "summary": "Keep users' files in sync across devices and store them durably.",
+  "functional": ["Upload, download and sync files across devices", "Only changed blocks are uploaded", "Version history and restore"],
+  "non_functional": ["Durability of eleven nines", "A change reaches other online devices within seconds", "Deduplicate identical blocks across users"],
+  "assumptions": {
+    "users": { "value": 500000000, "unit": "count", "why": "Registered users." },
+    "daily_active_users": { "value": 100000000, "unit": "count", "why": "A fifth of users sync on a given day." },
+    "stored_bytes_per_user": { "value": 2000000000, "unit": "bytes", "why": "Average 2 GB per user, most free-tier accounts holding little." },
+    "dedupe_savings": { "value": 0.3, "unit": "ratio", "why": "Identical blocks across users (installers, shared documents)." },
+    "erasure_overhead": { "value": 1.5, "unit": "ratio", "why": "Erasure coding instead of three full copies." },
+    "changes_per_user_per_day": { "value": 20, "unit": "ratio", "why": "Files changed per active user per day." },
+    "changed_bytes_per_change": { "value": 200000, "unit": "bytes", "why": "Only changed blocks are sent." },
+    "metadata_ops_per_change": { "value": 10, "unit": "ratio", "why": "Block lookups, version writes and notifications per change." }
+  },
+  "derived": [
+    { "name": "logical_storage", "label": "Logical data stored", "formula": "users * stored_bytes_per_user", "unit": "bytes" },
+    { "name": "physical_storage", "label": "Physical storage after dedupe and erasure coding", "formula": "logical_storage * (1 - dedupe_savings) * erasure_overhead", "unit": "bytes" },
+    { "name": "upload_per_day", "label": "Uploaded changes per day", "formula": "daily_active_users * changes_per_user_per_day * changed_bytes_per_change", "unit": "bytes" },
+    { "name": "peak_metadata_qps", "label": "Metadata operations per second at peak", "formula": "daily_active_users * changes_per_user_per_day * metadata_ops_per_change / seconds_per_day * peak_to_average", "unit": "req/s" }
+  ],
+  "headline": ["physical_storage", "upload_per_day", "peak_metadata_qps"]
+}

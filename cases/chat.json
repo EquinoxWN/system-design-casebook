@@ -1,0 +1,25 @@
+{
+  "id": "chat",
+  "title": "Chat and messaging",
+  "summary": "One-to-one and small group messaging with delivery to online devices in real time.",
+  "functional": ["Send a message to a person or group", "Deliver instantly to online devices, later to offline ones", "Show delivered and read receipts"],
+  "non_functional": ["Delivery p99 under 300 ms between online users", "Messages are never lost once acknowledged", "Ordered per conversation"],
+  "assumptions": {
+    "daily_active_users": { "value": 500000000, "unit": "count", "why": "A global messaging app." },
+    "messages_per_user_per_day": { "value": 40, "unit": "ratio", "why": "Active chat users send dozens of messages a day." },
+    "message_bytes": { "value": 200, "unit": "bytes", "why": "About 100 bytes of text plus ids, timestamps and encryption overhead." },
+    "online_fraction": { "value": 0.2, "unit": "ratio", "why": "Share of daily users connected at the same moment at peak." },
+    "connections_per_server": { "value": 100000, "unit": "connections", "why": "Long-lived WebSocket connections per gateway with an event loop." },
+    "retention_years": { "value": 1, "unit": "count", "why": "Server keeps undelivered and recent history for one year." }
+  },
+  "derived": [
+    { "name": "messages_per_day", "label": "Messages per day", "formula": "daily_active_users * messages_per_user_per_day", "unit": "count/day" },
+    { "name": "peak_message_qps", "label": "Messages per second at peak", "formula": "messages_per_day / seconds_per_day * peak_to_average", "unit": "req/s" },
+    { "name": "concurrent_connections", "label": "Concurrent connections at peak", "formula": "daily_active_users * online_fraction", "unit": "connections" },
+    { "name": "gateway_servers", "label": "Connection gateway servers", "formula": "ceil(concurrent_connections / (connections_per_server * headroom))", "unit": "servers" },
+    { "name": "storage_per_day", "label": "Message storage per day", "formula": "messages_per_day * message_bytes", "unit": "bytes" },
+    { "name": "storage_total", "label": "Message storage for the retention period, with replicas", "formula": "storage_per_day * days_per_year * retention_years * replication_factor", "unit": "bytes" },
+    { "name": "peak_bandwidth", "label": "Message bandwidth at peak (in and out)", "formula": "peak_message_qps * message_bytes * 2", "unit": "bytes/s" }
+  ],
+  "headline": ["concurrent_connections", "gateway_servers", "peak_message_qps", "storage_total"]
+}

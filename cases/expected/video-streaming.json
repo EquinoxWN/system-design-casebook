@@ -1,0 +1,7 @@
+{
+  "average_concurrent_viewers": 22222222.222222224,
+  "peak_egress": 111111111111111.12,
+  "video_seconds_uploaded_per_second": 30000,
+  "storage_per_day": 11664000000000000,
+  "transcode_cores": 120000
+}

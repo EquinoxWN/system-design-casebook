@@ -1,0 +1,28 @@
+{
+  "id": "news-feed",
+  "title": "News feed",
+  "summary": "Show each user a feed of recent posts from the accounts they follow.",
+  "functional": ["Publish a post", "Read the home feed newest first, paginated", "Follow and unfollow accounts"],
+  "non_functional": ["Feed read p99 under 200 ms", "A new post appears in followers' feeds within a few seconds", "Accounts with millions of followers must not stall delivery for everyone else"],
+  "assumptions": {
+    "daily_active_users": { "value": 200000000, "unit": "count", "why": "A large social network." },
+    "posts_per_user_per_day": { "value": 1, "unit": "ratio", "why": "Some post several times, most never; one per user on average." },
+    "average_followers": { "value": 200, "unit": "count", "why": "Typical median-to-mean follower count on mature networks." },
+    "feed_reads_per_user_per_day": { "value": 10, "unit": "ratio", "why": "Users open the app about ten times a day." },
+    "post_bytes": { "value": 300, "unit": "bytes", "why": "Text, ids and timestamps; media is stored separately." },
+    "feed_entry_bytes": { "value": 16, "unit": "bytes", "why": "Post id and author id per cached feed entry." },
+    "feed_length": { "value": 500, "unit": "count", "why": "Keep the newest 500 entries per user in the feed cache." },
+    "celebrity_followers": { "value": 100000000, "unit": "count", "why": "The largest accounts." },
+    "fanout_writes_per_second": { "value": 1000000, "unit": "req/s", "why": "Throughput of the fan-out workers writing into feed caches." }
+  },
+  "derived": [
+    { "name": "posts_per_day", "label": "Posts per day", "formula": "daily_active_users * posts_per_user_per_day", "unit": "count/day" },
+    { "name": "fanout_per_day", "label": "Feed inserts per day if every post is pushed", "formula": "posts_per_day * average_followers", "unit": "count/day" },
+    { "name": "peak_fanout_qps", "label": "Feed inserts per second at peak", "formula": "fanout_per_day / seconds_per_day * peak_to_average", "unit": "req/s" },
+    { "name": "peak_feed_reads", "label": "Feed reads per second at peak", "formula": "daily_active_users * feed_reads_per_user_per_day / seconds_per_day * peak_to_average", "unit": "req/s" },
+    { "name": "feed_cache_memory", "label": "Feed cache, with replicas", "formula": "daily_active_users * feed_length * feed_entry_bytes * replication_factor", "unit": "bytes" },
+    { "name": "post_storage_per_year", "label": "Post storage per year, with replicas", "formula": "posts_per_day * days_per_year * post_bytes * replication_factor", "unit": "bytes" },
+    { "name": "celebrity_fanout_seconds", "label": "Time to push one celebrity post to every follower", "formula": "celebrity_followers / fanout_writes_per_second", "unit": "seconds" }
+  ],
+  "headline": ["peak_fanout_qps", "peak_feed_reads", "feed_cache_memory", "celebrity_fanout_seconds"]
+}

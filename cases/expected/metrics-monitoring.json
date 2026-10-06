@@ -1,0 +1,7 @@
+{
+  "samples_per_second": 6666666.666666667,
+  "active_series": 100000000,
+  "storage_per_day": 789120000000.0001,
+  "storage_total": 47347200000000.01,
+  "ingesters": 18
+}

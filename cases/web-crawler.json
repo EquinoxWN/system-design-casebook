@@ -1,0 +1,25 @@
+{
+  "id": "web-crawler",
+  "title": "Web crawler",
+  "summary": "Fetch and store a billion web pages a month while being polite to every site.",
+  "functional": ["Fetch pages from a frontier of URLs", "Extract links and add new URLs to the frontier", "Skip duplicates and respect robots.txt and per-host limits"],
+  "non_functional": ["At most one request per second per host", "Resume after crashes without refetching everything", "Detect duplicate content"],
+  "assumptions": {
+    "pages_per_month": { "value": 1000000000, "unit": "count", "why": "The target crawl rate." },
+    "days_per_month": { "value": 30, "unit": "count", "why": "Planning month." },
+    "page_bytes": { "value": 100000, "unit": "bytes", "why": "Average HTML page around 100 KB." },
+    "fetch_seconds": { "value": 1.5, "unit": "seconds", "why": "DNS, connect, TLS and download for an average page." },
+    "duplicate_fraction": { "value": 0.3, "unit": "ratio", "why": "Mirrors, tracking parameters and near-copies; not stored twice." },
+    "retention_months": { "value": 12, "unit": "count", "why": "Keep a year of snapshots." },
+    "fetches_per_server": { "value": 500, "unit": "count", "why": "Concurrent asynchronous fetches one crawler node handles." }
+  },
+  "derived": [
+    { "name": "pages_per_second", "label": "Pages fetched per second", "formula": "pages_per_month / (days_per_month * seconds_per_day)", "unit": "req/s" },
+    { "name": "bandwidth", "label": "Download bandwidth", "formula": "pages_per_second * page_bytes * 8", "unit": "bits/s" },
+    { "name": "concurrent_fetches", "label": "Fetches in flight (Little's law)", "formula": "pages_per_second * fetch_seconds", "unit": "count" },
+    { "name": "crawler_servers", "label": "Crawler servers", "formula": "ceil(concurrent_fetches / (fetches_per_server * headroom))", "unit": "servers" },
+    { "name": "storage_per_month", "label": "New page storage per month, with replicas", "formula": "pages_per_month * (1 - duplicate_fraction) * page_bytes * replication_factor", "unit": "bytes" },
+    { "name": "storage_total", "label": "Page storage for the retention period", "formula": "storage_per_month * retention_months", "unit": "bytes" }
+  ],
+  "headline": ["pages_per_second", "bandwidth", "concurrent_fetches", "storage_total"]
+}

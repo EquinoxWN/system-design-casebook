@@ -1,0 +1,9 @@
+{
+  "posts_per_day": 200000000,
+  "fanout_per_day": 40000000000,
+  "peak_fanout_qps": 1388888.888888889,
+  "peak_feed_reads": 69444.44444444445,
+  "feed_cache_memory": 4800000000000,
+  "post_storage_per_year": 65700000000000,
+  "celebrity_fanout_seconds": 100
+}

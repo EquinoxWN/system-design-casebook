@@ -1,0 +1,9 @@
+{
+  "assumptions": {
+    "seconds_per_day": { "value": 86400, "unit": "seconds", "why": "Definition." },
+    "days_per_year": { "value": 365, "unit": "count", "why": "Definition." },
+    "peak_to_average": { "value": 3, "unit": "ratio", "why": "Daily traffic peaks at roughly 2 to 3 times its average for consumer products; 3 is the conservative end." },
+    "headroom": { "value": 0.7, "unit": "ratio", "why": "Plan to run servers at 70% of measured capacity so one failure or a spike does not overload the rest." },
+    "replication_factor": { "value": 3, "unit": "ratio", "why": "Three copies survive one lost node during maintenance of another, the common default for databases and object stores." }
+  }
+}

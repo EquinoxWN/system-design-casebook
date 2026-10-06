@@ -1,0 +1,23 @@
+{
+  "id": "rate-limiter",
+  "title": "Distributed rate limiter",
+  "summary": "Limit how many requests each client may make, consistently across a fleet of API gateways.",
+  "functional": ["Allow or reject each request by client key and rule", "Rules per key: N requests per window, with bursts", "Return remaining quota and retry-after"],
+  "non_functional": ["Adds under 5 ms p99 to each request", "Fails open if the counter store is down (availability over strictness)", "Accurate within a few percent across the fleet"],
+  "assumptions": {
+    "api_requests_per_day": { "value": 5000000000, "unit": "count/day", "why": "A large public API across all clients." },
+    "active_keys": { "value": 20000000, "unit": "count", "why": "Users, API tokens and IP addresses seen in a window." },
+    "bytes_per_key": { "value": 100, "unit": "bytes", "why": "Sliding-window counter: key, two counters and expiry, plus store overhead." },
+    "store_ops_per_check": { "value": 1, "unit": "ratio", "why": "One atomic script call (read, increment, expire) per request." },
+    "store_ops_per_node": { "value": 100000, "unit": "req/s", "why": "Measured order of magnitude for one Redis or Valkey shard with small scripts." },
+    "replication_factor": { "value": 2, "unit": "ratio", "why": "Counters are cheap to lose; one replica per shard is enough." }
+  },
+  "derived": [
+    { "name": "request_qps", "label": "Requests per second (average)", "formula": "api_requests_per_day / seconds_per_day", "unit": "req/s" },
+    { "name": "peak_qps", "label": "Requests per second at peak", "formula": "request_qps * peak_to_average", "unit": "req/s" },
+    { "name": "counter_memory", "label": "Counter memory, with replicas", "formula": "active_keys * bytes_per_key * replication_factor", "unit": "bytes" },
+    { "name": "store_ops", "label": "Counter-store operations per second at peak", "formula": "peak_qps * store_ops_per_check", "unit": "req/s" },
+    { "name": "store_shards", "label": "Counter-store shards", "formula": "ceil(store_ops / (store_ops_per_node * headroom))", "unit": "nodes" }
+  ],
+  "headline": ["peak_qps", "counter_memory", "store_ops", "store_shards"]
+}

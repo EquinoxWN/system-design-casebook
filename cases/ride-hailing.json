@@ -1,0 +1,23 @@
+{
+  "id": "ride-hailing",
+  "title": "Ride hailing (driver matching)",
+  "summary": "Track drivers' locations and match each ride request to a nearby available driver.",
+  "functional": ["Drivers report their location every few seconds", "Riders request a ride and get the nearest suitable driver", "Track the trip in real time"],
+  "non_functional": ["Match within 2 seconds", "Location shown to riders is at most a few seconds old", "No driver is offered two rides at once"],
+  "assumptions": {
+    "drivers_online_peak": { "value": 1000000, "unit": "count", "why": "Drivers online at the busiest moment globally." },
+    "location_interval_seconds": { "value": 4, "unit": "seconds", "why": "Each driver app sends a location every 4 s." },
+    "location_bytes": { "value": 100, "unit": "bytes", "why": "Driver id, coordinates, heading, speed and timestamp." },
+    "rides_per_day": { "value": 20000000, "unit": "count/day", "why": "A large ride-hailing company." },
+    "searches_per_ride": { "value": 3, "unit": "ratio", "why": "Nearby-driver searches per request, including retries and ETA refreshes." },
+    "geo_index_replicas": { "value": 3, "unit": "ratio", "why": "In-memory geo index copies per region for availability." }
+  },
+  "derived": [
+    { "name": "location_updates_per_second", "label": "Location updates per second at peak", "formula": "drivers_online_peak / location_interval_seconds", "unit": "req/s" },
+    { "name": "location_ingest", "label": "Location ingest bandwidth", "formula": "location_updates_per_second * location_bytes", "unit": "bytes/s" },
+    { "name": "geo_index_memory", "label": "Live geo index memory, with replicas", "formula": "drivers_online_peak * location_bytes * geo_index_replicas", "unit": "bytes" },
+    { "name": "peak_match_searches", "label": "Nearby searches per second at peak", "formula": "rides_per_day * searches_per_ride / seconds_per_day * peak_to_average", "unit": "req/s" },
+    { "name": "history_per_day", "label": "Location history per day if every update is kept", "formula": "location_updates_per_second / peak_to_average * seconds_per_day * location_bytes", "unit": "bytes" }
+  ],
+  "headline": ["location_updates_per_second", "geo_index_memory", "peak_match_searches", "history_per_day"]
+}

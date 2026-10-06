@@ -1,0 +1,7 @@
+{
+  "location_updates_per_second": 250000,
+  "location_ingest": 25000000,
+  "geo_index_memory": 300000000,
+  "peak_match_searches": 2083.3333333333335,
+  "history_per_day": 720000000000
+}

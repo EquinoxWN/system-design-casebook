@@ -1,0 +1,32 @@
+{
+  "id": "url-shortener",
+  "title": "URL shortener",
+  "summary": "Turn long URLs into short links and redirect anyone who opens one.",
+  "functional": ["Create a short link for a long URL, optionally with a custom alias", "Redirect a short link to its long URL", "Links expire after the retention period"],
+  "non_functional": ["Redirect p99 latency under 50 ms", "99.99% availability for redirects (writes may degrade first)", "Short links are not guessable in order"],
+  "assumptions": {
+    "daily_active_users": { "value": 100000000, "unit": "count", "why": "A large consumer service; Bitly-scale products create links for a small fraction of users daily." },
+    "links_per_user_per_day": { "value": 0.1, "unit": "ratio", "why": "Most users only click links; one in ten creates one per day." },
+    "reads_per_write": { "value": 100, "unit": "ratio", "why": "Shared links are opened far more often than created; 100:1 is the usual planning ratio." },
+    "record_bytes": { "value": 500, "unit": "bytes", "why": "Long URL (about 100 to 200 bytes) plus key, owner, timestamps and indexes." },
+    "redirect_response_bytes": { "value": 500, "unit": "bytes", "why": "A 301 response with headers." },
+    "retention_years": { "value": 10, "unit": "count", "why": "Links printed on paper must keep working for years." },
+    "cache_hot_fraction": { "value": 0.2, "unit": "ratio", "why": "80/20 rule: a fifth of the day's requests cover most hot links (an upper bound, since requests repeat)." },
+    "server_rps": { "value": 20000, "unit": "req/s", "why": "A key lookup served from cache needs little CPU; 20k requests/s per node is typical for a small Go or Java service." },
+    "node_storage_bytes": { "value": 2000000000000, "unit": "bytes", "why": "2 TB of usable SSD per database node." }
+  },
+  "derived": [
+    { "name": "writes_per_day", "label": "New links per day", "formula": "daily_active_users * links_per_user_per_day", "unit": "count/day" },
+    { "name": "redirects_per_day", "label": "Redirects per day", "formula": "writes_per_day * reads_per_write", "unit": "count/day" },
+    { "name": "write_qps", "label": "Link creations per second (average)", "formula": "writes_per_day / seconds_per_day", "unit": "req/s" },
+    { "name": "peak_redirect_qps", "label": "Redirects per second at peak", "formula": "redirects_per_day / seconds_per_day * peak_to_average", "unit": "req/s" },
+    { "name": "links_total", "label": "Links stored after the retention period", "formula": "writes_per_day * days_per_year * retention_years", "unit": "count" },
+    { "name": "key_length", "label": "Base62 key length needed", "formula": "ceil(log(links_total, 62))", "unit": "chars" },
+    { "name": "storage_total", "label": "Database storage with replicas", "formula": "links_total * record_bytes * replication_factor", "unit": "bytes" },
+    { "name": "peak_egress", "label": "Redirect bandwidth at peak", "formula": "peak_redirect_qps * redirect_response_bytes", "unit": "bytes/s" },
+    { "name": "cache_memory", "label": "Cache for the hot 20% of a day's redirects", "formula": "redirects_per_day * cache_hot_fraction * record_bytes", "unit": "bytes" },
+    { "name": "app_servers", "label": "Redirect servers", "formula": "ceil(peak_redirect_qps * (1 + 1 / reads_per_write) / (server_rps * headroom))", "unit": "servers" },
+    { "name": "storage_nodes", "label": "Database nodes for storage", "formula": "ceil(storage_total / (node_storage_bytes * headroom))", "unit": "nodes" }
+  ],
+  "headline": ["peak_redirect_qps", "key_length", "storage_total", "cache_memory", "app_servers", "storage_nodes"]
+}

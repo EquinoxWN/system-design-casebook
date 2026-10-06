@@ -1,0 +1,6 @@
+{
+  "logical_storage": 1000000000000000000,
+  "physical_storage": 1050000000000000000,
+  "upload_per_day": 400000000000000,
+  "peak_metadata_qps": 694444.4444444445
+}

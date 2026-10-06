@@ -1,0 +1,25 @@
+{
+  "id": "metrics-monitoring",
+  "title": "Metrics monitoring",
+  "summary": "Collect time series from a large fleet, store them, and evaluate alerts.",
+  "functional": ["Scrape or receive metrics from every host", "Query recent and historical series", "Evaluate alert rules every few seconds"],
+  "non_functional": ["Alert evaluation delay under 30 s", "No data loss during a single node failure", "Queries over the last hour return in under a second"],
+  "assumptions": {
+    "hosts": { "value": 100000, "unit": "count", "why": "Machines and containers in the fleet." },
+    "metrics_per_host": { "value": 1000, "unit": "count", "why": "Series per host across system and application metrics." },
+    "scrape_interval_seconds": { "value": 15, "unit": "seconds", "why": "The usual Prometheus scrape interval." },
+    "bytes_per_sample": { "value": 1.37, "unit": "bytes", "why": "Gorilla-style compression of timestamp and value." },
+    "memory_per_series": { "value": 4000, "unit": "bytes", "why": "In-memory head block, labels and index per active series." },
+    "retention_days": { "value": 30, "unit": "count", "why": "Raw samples kept for a month; older data is downsampled." },
+    "node_memory_bytes": { "value": 64000000000, "unit": "bytes", "why": "64 GB of RAM per ingester." },
+    "replication_factor": { "value": 2, "unit": "ratio", "why": "Two ingesters receive every series." }
+  },
+  "derived": [
+    { "name": "samples_per_second", "label": "Samples ingested per second", "formula": "hosts * metrics_per_host / scrape_interval_seconds", "unit": "req/s" },
+    { "name": "active_series", "label": "Active series", "formula": "hosts * metrics_per_host", "unit": "count" },
+    { "name": "storage_per_day", "label": "Compressed samples per day", "formula": "samples_per_second * seconds_per_day * bytes_per_sample", "unit": "bytes" },
+    { "name": "storage_total", "label": "Storage for the retention period, with replicas", "formula": "storage_per_day * retention_days * replication_factor", "unit": "bytes" },
+    { "name": "ingesters", "label": "Ingester nodes (memory-bound)", "formula": "ceil(active_series * memory_per_series * replication_factor / (node_memory_bytes * headroom))", "unit": "nodes" }
+  ],
+  "headline": ["samples_per_second", "active_series", "storage_total", "ingesters"]
+}

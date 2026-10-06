@@ -1,0 +1,6 @@
+{
+  "requests_per_day": 10000000000,
+  "peak_qps": 347222.22222222225,
+  "index_memory": 100000000000,
+  "servers": 10
+}

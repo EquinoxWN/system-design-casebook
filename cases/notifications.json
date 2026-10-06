@@ -1,0 +1,28 @@
+{
+  "id": "notifications",
+  "title": "Notification service",
+  "summary": "Send push, email and SMS notifications for other services, reliably and without duplicates.",
+  "functional": ["Accept notification requests from internal services", "Deliver by push, email or SMS according to user preferences", "Retry failures and never send the same notification twice"],
+  "non_functional": ["Critical notifications delivered within 30 s", "At-least-once internally, exactly-once to the user through idempotency keys", "Per-user rate limits"],
+  "assumptions": {
+    "notifications_per_day": { "value": 1000000000, "unit": "count/day", "why": "200 million users receiving about five a day." },
+    "push_share": { "value": 0.7, "unit": "ratio", "why": "Push is the default channel." },
+    "email_share": { "value": 0.25, "unit": "ratio", "why": "Digests and receipts." },
+    "sms_share": { "value": 0.05, "unit": "ratio", "why": "Security codes and critical alerts only." },
+    "sms_cost_usd": { "value": 0.0075, "unit": "usd", "why": "Typical bulk price per SMS in the US." },
+    "email_cost_usd": { "value": 0.0001, "unit": "usd", "why": "Typical bulk price per email." },
+    "log_bytes": { "value": 1000, "unit": "bytes", "why": "Request, rendered payload reference and delivery status per notification." },
+    "log_retention_days": { "value": 30, "unit": "count", "why": "Keep delivery logs for support and audits." },
+    "worker_rps": { "value": 2000, "unit": "req/s", "why": "Sending is latency-bound on external providers, so each worker handles few per second." }
+  },
+  "derived": [
+    { "name": "peak_qps", "label": "Notifications per second at peak", "formula": "notifications_per_day / seconds_per_day * peak_to_average", "unit": "req/s" },
+    { "name": "peak_push_qps", "label": "Push sends per second at peak", "formula": "peak_qps * push_share", "unit": "req/s" },
+    { "name": "sms_per_day", "label": "SMS per day", "formula": "notifications_per_day * sms_share", "unit": "count/day" },
+    { "name": "sms_cost_per_day", "label": "SMS cost per day", "formula": "sms_per_day * sms_cost_usd", "unit": "usd/day" },
+    { "name": "email_cost_per_day", "label": "Email cost per day", "formula": "notifications_per_day * email_share * email_cost_usd", "unit": "usd/day" },
+    { "name": "log_storage", "label": "Delivery log storage, with replicas", "formula": "notifications_per_day * log_bytes * log_retention_days * replication_factor", "unit": "bytes" },
+    { "name": "workers", "label": "Sender workers", "formula": "ceil(peak_qps / (worker_rps * headroom))", "unit": "servers" }
+  ],
+  "headline": ["peak_qps", "sms_cost_per_day", "email_cost_per_day", "log_storage", "workers"]
+}

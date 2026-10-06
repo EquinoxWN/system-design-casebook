@@ -1,0 +1,9 @@
+{
+  "messages_per_day": 20000000000,
+  "peak_message_qps": 694444.4444444445,
+  "concurrent_connections": 100000000,
+  "gateway_servers": 1429,
+  "storage_per_day": 4000000000000,
+  "storage_total": 4380000000000000,
+  "peak_bandwidth": 277777777.7777778
+}
