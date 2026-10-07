@@ -50,6 +50,12 @@ _Steps 1 and 2 are built and tested (M1); the rest is on the [roadmap](#roadmap)
 5. k6 measures the prototype, and the doc compares measured numbers with the estimate.
 6. Every case ends with failure modes, scaling limits and a cost estimate, the way a Staff design review does.
 
+## Who it helps
+
+- **Who:** Engineers preparing for system-design interviews or design reviews.
+- **The problem:** Back-of-envelope estimates are often hand-waved, hard to check and hard to redo when an assumption changes.
+- **How to use it:** Pick one of the twelve cases, read its stated assumptions, and change any of them with one flag; the calculator recomputes the estimates identically in JavaScript and Java.
+
 ## Tech stack
 
 | Area | In M1 | Planned |
