@@ -179,7 +179,7 @@ This is a learning and portfolio system, not a hosted production service. Everyt
 
 - Every GitHub Action is pinned to a commit SHA; workflows run read-only, without persisted credentials.
 - Dependabot proposes dependency and action updates weekly.
-- Formulas from case files are parsed by a small grammar and never evaluated as code; CI runs `npm audit` on every push (Java dependencies: Dependabot alerts).
+- Formulas from case files are parsed by a small grammar and never evaluated as code; CI runs `npm audit` and OSV-Scanner on a CycloneDX SBOM of the Java dependencies on every push.
 - Report vulnerabilities privately: see [SECURITY.md](SECURITY.md). To contribute, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License

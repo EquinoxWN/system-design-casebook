@@ -1,3 +1,6 @@
+# OSV-Scanner (https://google.github.io/osv-scanner/) checks every resolved Maven dependency.
+OSV ?= osv-scanner
+
 .PHONY: setup lint test docs bench audit ci
 
 # MVNLOCAL (set by the author's repoenv helper) keeps the Maven repository inside the repo; empty in CI.
@@ -24,8 +27,10 @@ docs:
 bench:
 	@echo "M2: prototypes for the critical path of each case, measured with k6 against the estimates"
 
-# Known vulnerabilities in npm dependencies (Java: Dependabot alerts).
+# Known vulnerabilities in npm and Maven dependencies.
 audit:
 	cd js && npm audit --audit-level=high
+	cd java && mvn -B -q org.cyclonedx:cyclonedx-maven-plugin:2.9.3:makeAggregateBom -DoutputFormat=json -DoutputName=bom -DincludeTestScope=true
+	$(OSV) scan source -L java/target/bom.json
 
 ci: setup lint test
