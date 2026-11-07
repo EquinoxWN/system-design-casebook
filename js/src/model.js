@@ -37,7 +37,14 @@ export function caseIds(dir = CASES_DIR) {
 export function loadCase(id, dir = CASES_DIR) {
   // Only names of files in the cases folder: an id can never become a path elsewhere.
   if (!/^[a-z0-9-]{1,64}$/.test(id) || !caseIds(dir).includes(id)) throw new CaseError(id, 'unknown case');
-  const read = (/** @type {string} */ f) => JSON.parse(readFileSync(new URL(f, dir), 'utf8'));
+  const read = (/** @type {string} */ f) => {
+    try {
+      return JSON.parse(readFileSync(new URL(f, dir), 'utf8'));
+    } catch (e) {
+      if (e instanceof SyntaxError) throw new CaseError(id, `${f} is not valid JSON: ${e.message}`);
+      throw e;
+    }
+  };
   const defaults = read('defaults.json').assumptions;
   /** @type {Case} */
   const c = read(`${id}.json`);
@@ -49,6 +56,14 @@ export function loadCase(id, dir = CASES_DIR) {
 
 /** Check names, units, formulas and that every formula only uses names defined before it. @param {Case} c */
 export function validate(c) {
+  if (typeof c.title !== 'string' || typeof c.summary !== 'string') throw new CaseError(c.id, 'title and summary must be text');
+  if (!c.assumptions || typeof c.assumptions !== 'object' || Array.isArray(c.assumptions)) throw new CaseError(c.id, 'assumptions must be an object');
+  for (const key of /** @type {const} */ (['functional', 'non_functional', 'derived', 'headline'])) {
+    if (!Array.isArray(c[key])) throw new CaseError(c.id, `${key} must be a list`);
+  }
+  for (const d of c.derived) {
+    if (typeof d?.name !== 'string' || typeof d.formula !== 'string' || typeof d.label !== 'string') throw new CaseError(c.id, 'every derived value needs a name, a label and a formula');
+  }
   const known = new Set();
   for (const [name, a] of Object.entries(c.assumptions)) {
     if (!/^[a-z][a-z0-9_]*$/.test(name)) throw new CaseError(c.id, `bad assumption name ${name}`);

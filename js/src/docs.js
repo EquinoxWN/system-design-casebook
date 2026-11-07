@@ -1,10 +1,17 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { format } from './format.js';
 import { compute } from './model.js';
 import { sensitivity } from './sensitivity.js';
 
 export const START = '<!-- generated from cases/{id}.json by `npm run docs`: do not edit by hand -->';
 export const END = '<!-- end of generated section -->';
+
+/** Write through a temporary file and a rename, so an interrupted run never leaves half a file. @param {string} path @param {string} text */
+export function writeAtomic(path, text) {
+  const tmp = `${path}.${process.pid}.tmp`;
+  writeFileSync(tmp, text);
+  renameSync(tmp, path);
+}
 
 /** Signed percentage with one decimal. @param {number} x */
 const pct = (x) => `${x >= 0 ? '+' : '-'}${Math.abs(x * 100).toFixed(1)}%`;
@@ -70,6 +77,6 @@ export function updateDoc(path, c, { check }) {
   if (start < 0 || end < start) throw new Error(`${path}: generated markers are missing`);
   const next = current.slice(0, start) + generated + current.slice(end + END.length);
   if (next === current) return true;
-  if (!check) writeFileSync(path, next);
+  if (!check) writeAtomic(path, next);
   return false;
 }

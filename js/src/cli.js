@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // casebook list | show <id> [--set name=value ...] | sensitivity <id> | docs [--check] | expected [--check]
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { updateDoc } from './docs.js';
+import { updateDoc, writeAtomic } from './docs.js';
 import { format } from './format.js';
 import { FormulaError } from './expr.js';
 import { CaseError, caseIds, CASES_DIR, compute, loadCase, results } from './model.js';
@@ -10,6 +10,19 @@ import { sensitivity } from './sensitivity.js';
 
 const DOCS = new URL('../../docs/cases/', import.meta.url);
 const EXPECTED = new URL('expected/', CASES_DIR);
+/** A plain decimal number, optionally with an exponent (no hex, no Infinity, no empty string). */
+const NUMBER = /^[-+]?(\d+(\.\d*)?|\.\d+)([eE][-+]?\d+)?$/;
+
+/** Parse one `name=number` override, or undefined if it is not one. @param {string | undefined} arg */
+export function parseOverride(arg) {
+  const at = arg === undefined ? -1 : arg.indexOf('=');
+  if (arg === undefined || at < 1) return undefined;
+  const name = arg.slice(0, at);
+  const text = arg.slice(at + 1);
+  const value = Number(text);
+  if (!NUMBER.test(text) || !Number.isFinite(value)) return undefined;
+  return { name, value };
+}
 
 /** Expected values file content for a case (full precision, used by the Java cross-check). @param {string} id */
 export function expectedJson(id) {
@@ -42,12 +55,12 @@ function dispatch(args, out, err) {
       const overrides = {};
       for (let i = 1; i < rest.length; i++) {
         if (rest[i] !== '--set') continue;
-        const [k, v] = String(rest[++i]).split('=');
-        if (!k || v === undefined || !Number.isFinite(Number(v))) {
+        const o = parseOverride(rest[++i]);
+        if (!o) {
           err('use --set name=number');
           return 2;
         }
-        overrides[k] = Number(v);
+        overrides[o.name] = o.value;
       }
       const c = loadCase(id);
       out(`${c.title}${Object.keys(overrides).length ? ` (what if: ${JSON.stringify(overrides)})` : ''}`);
@@ -74,12 +87,13 @@ function dispatch(args, out, err) {
           let have = '';
           try {
             have = readFileSync(file, 'utf8');
-          } catch {
-            have = '';
+          } catch (e) {
+            // A missing file is simply out of date; any other read error is reported.
+            if (/** @type {NodeJS.ErrnoException} */ (e).code !== 'ENOENT') throw e;
           }
           if (have !== want) {
             stale.push(id);
-            if (!check) writeFileSync(file, want);
+            if (!check) writeAtomic(fileURLToPath(file), want);
           }
         }
       }
