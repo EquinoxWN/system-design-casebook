@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { run } from '../src/cli.js';
+import { parseOverride, run } from '../src/cli.js';
 
 /** Run the CLI and capture its output. @param {string[]} args */
 function cli(args) {
@@ -39,4 +39,18 @@ test('an unknown case or assumption is a clear error with exit 2, not a crash', 
     assert.equal(r.code, 2, id);
     assert.match(r.err.join(' '), /unknown case/, id);
   }
+});
+
+test('a --set value must be a plain finite number', () => {
+  assert.deepEqual(parseOverride('online_fraction=0.1'), { name: 'online_fraction', value: 0.1 });
+  assert.deepEqual(parseOverride('users=1e6'), { name: 'users', value: 1e6 });
+  for (const bad of ['online_fraction=', 'online_fraction=lots', 'online_fraction=1=2', 'online_fraction=Infinity', 'online_fraction=0x10', '=1', 'online_fraction', undefined]) {
+    assert.equal(parseOverride(bad), undefined, String(bad));
+  }
+  for (const bad of ['online_fraction=', 'online_fraction=lots', 'online_fraction=1=2']) {
+    const r = cli(['show', 'chat', '--set', bad]);
+    assert.equal(r.code, 2, bad);
+    assert.match(r.err.join(' '), /use --set name=number/, bad);
+  }
+  assert.equal(cli(['show', 'chat', '--set']).code, 2, 'a missing value');
 });

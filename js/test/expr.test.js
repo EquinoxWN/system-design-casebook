@@ -21,6 +21,7 @@ test('prototype names are unknown functions, and huge or deeply nested input is 
   assert.throws(() => parse('-'.repeat(MAX_DEPTH + 1) + '1'), (e) => e instanceof FormulaError && /nested/.test(e.message));
   assert.throws(() => parse('1+'.repeat(MAX_LENGTH) + '1'), (e) => e instanceof FormulaError && /longer than/.test(e.message));
   assert.equal(evaluate(parse('('.repeat(50) + '2' + ')'.repeat(50)), new Map(), 'x'), 2);
+  assert.equal(evaluate(parse('-'.repeat(MAX_DEPTH - 1) + '1'), new Map(), 'x'), -1, 'exactly the maximum depth is accepted');
 });
 
 test('names and functions', () => {

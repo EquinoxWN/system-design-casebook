@@ -28,6 +28,7 @@ class FormulaTest {
         assertTrue(assertThrows(Formula.FormulaException.class, () -> Formula.parse(longSum)).getMessage()
                 .contains("longer than"));
         assertEquals(2.0, calc("(".repeat(50) + "2" + ")".repeat(50), Map.of()));
+        assertEquals(-1.0, calc("-".repeat(Formula.MAX_DEPTH - 1) + "1", Map.of()), "exactly the maximum depth is accepted");
     }
 
     @Test

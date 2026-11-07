@@ -57,6 +57,25 @@ class CrossLanguageTest {
     }
 
     @Test
+    void aMalformedMisnamedOrIncompleteCaseFileIsAClearError(@org.junit.jupiter.api.io.TempDir Path dir) throws IOException {
+        Files.copy(CASES.resolve("defaults.json"), dir.resolve("defaults.json"));
+        Map<String, String> files = Map.of(
+                "broken", "{\"id\": \"broken\",",
+                "misnamed", "{\"id\": \"other\", \"title\": \"t\", \"assumptions\": {}, \"derived\": []}",
+                "untitled", "{\"id\": \"untitled\", \"assumptions\": {}, \"derived\": []}",
+                "textvalue", "{\"id\": \"textvalue\", \"title\": \"t\", \"assumptions\": {\"x\": {\"value\": \"7\"}}, \"derived\": []}");
+        Map<String, String> why = Map.of("broken", "not valid JSON", "misnamed", "declares id other",
+                "untitled", "missing field title", "textvalue", "x must be a number");
+        for (Map.Entry<String, String> f : files.entrySet()) {
+            Files.writeString(dir.resolve(f.getKey() + ".json"), f.getValue());
+        }
+        for (String id : files.keySet()) {
+            IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> CaseModel.load(dir, id), id);
+            assertTrue(e.getMessage().contains(why.get(id)), id + ": " + e.getMessage());
+        }
+    }
+
+    @Test
     void anIdCanOnlyNameACaseFileNeverAPathElsewhere() {
         for (String id : List.of("nope", "../js/package", "defaults", "URL-SHORTENER", "")) {
             IllegalArgumentException e =

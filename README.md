@@ -13,7 +13,7 @@ Every number in a case is computed from its stated assumptions, so a what-if is 
 
 ![casebook show, a what-if override and the sensitivity of each headline](docs/proof/demo.jpg)
 
-46 tests pass. Java independently recomputes all twelve cases and must match the JavaScript results to 1e-12, and both dependency checks are clean:
+46 tests passed at M1 (49 since the [2026-11-01 quality pass](docs/quality/2026-11-01.md)). Java independently recomputes all twelve cases and must match the JavaScript results to 1e-12, and both dependency checks are clean:
 
 ![npm test, mvn verify, npm audit and the OSV check](docs/proof/tests.jpg)
 
@@ -73,7 +73,7 @@ One implementation per language, each in its own folder: [`js/`](js) (the calcul
 ```bash
 make setup   # npm ci
 make lint    # javac -Werror, tsc --checkJs --strict, docs and expected values current
-make test    # 21 JavaScript tests, then 25 Java tests that recompute every case
+make test    # 23 JavaScript tests, then 26 Java tests that recompute every case
 make docs    # after editing a case file: regenerate docs and expected values
 ```
 
@@ -112,7 +112,8 @@ Full numbers and commands: [docs/results/m1.md](docs/results/m1.md).
 
 | Check | Result |
 |---|---|
-| Tests (`make test`) | **46 passed** (JavaScript 21, Java 25), 0 failed |
+| Tests (`make test`) | **49 passed** (JavaScript 23, Java 26), 0 failed |
+| Quality pass | 20 hand mutations (13 JavaScript, 7 Java): 17 killed before, all 20 after three new tests and two stronger ones: [docs/quality/2026-11-01.md](docs/quality/2026-11-01.md) |
 | Cross-language | all twelve cases: every Java estimate equals the JavaScript one to 1e-12 |
 | Docs current | `make lint` fails if a case changed without regenerating its doc and expected values |
 | Formula safety | eleven malicious or broken formulas rejected with clear errors, in both languages |
@@ -123,13 +124,13 @@ Full numbers and commands: [docs/results/m1.md](docs/results/m1.md).
 ```mermaid
 flowchart TB
   EX["expr.test (4)<br/>incl. depth, length, prototype names"] --> F["formula parser"]
-  M["model.test (4)<br/>worked values, what-if, validation"] --> MO["model.js"]
+  M["model.test (5)<br/>worked values, what-if, validation,<br/>malformed case files"] --> MO["model.js"]
   FO["format.test (2)"] --> FM["format.js"]
   SE["sensitivity.test (4)"] --> SN["sensitivity.js"]
   DO["docs.test (3)<br/>docs current"] --> DC["docs.js"]
-  CL["cli.test (4)<br/>bad ids exit 2"] --> CLI["cli.js"]
+  CL["cli.test (5)<br/>bad ids and --set values exit 2"] --> CLI["cli.js"]
   FT["FormulaTest (11, Java)"] --> JF["Formula.java"]
-  CT["CrossLanguageTest (14, Java)<br/>12 cases = JS results"] --> JC["CaseModel.java"]
+  CT["CrossLanguageTest (15, Java)<br/>12 cases = JS results,<br/>malformed case files"] --> JC["CaseModel.java"]
 ```
 
 ## Roadmap
@@ -170,6 +171,7 @@ What this repo must show before it counts as done:
 - [ADR 0002: cases as data with a parsed formula language](docs/adr/0002-cases-as-data-with-a-parsed-formula-language.md)
 - [ADR 0003: report every tied driver](docs/adr/0003-report-every-tied-driver.md)
 - [M1 results](docs/results/m1.md)
+- [Quality check 2026-11-01](docs/quality/2026-11-01.md)
 
 ## Scope
 

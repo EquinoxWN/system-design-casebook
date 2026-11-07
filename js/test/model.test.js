@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
+import { copyFileSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { test } from 'node:test';
-import { caseIds, CaseError, compute, loadCase, results, validate } from '../src/model.js';
+import { CASES_DIR, caseIds, CaseError, compute, loadCase, results, validate } from '../src/model.js';
 
 test('there are twelve cases and every one loads and validates', () => {
   const ids = caseIds();
@@ -46,5 +50,20 @@ test('case validation catches the mistakes a contributor could make', () => {
   ];
   for (const [patch, why] of broken) {
     assert.throws(() => validate({ ...base, ...patch }), (e) => e instanceof CaseError && /** @type {RegExp} */ (why).test(e.message));
+  }
+});
+
+test('a case file that is malformed, misnamed or the wrong shape is a CaseError', () => {
+  const dir = mkdtempSync(join(process.env.TMP ?? tmpdir(), 'cases-'));
+  copyFileSync(new URL('defaults.json', CASES_DIR), join(dir, 'defaults.json'));
+  const url = pathToFileURL(`${dir}/`);
+  const files = {
+    broken: ['{"id": "broken",', /not valid JSON/],
+    misnamed: [JSON.stringify({ ...loadCase('pastebin'), id: 'other' }), /declares id other/],
+    shapeless: [JSON.stringify({ id: 'shapeless', title: 't', summary: 's', assumptions: {}, functional: [], non_functional: [], derived: 'x', headline: [] }), /derived must be a list/],
+  };
+  for (const [id, [text]] of Object.entries(files)) writeFileSync(join(dir, `${id}.json`), /** @type {string} */ (text));
+  for (const [id, [, why]] of Object.entries(files)) {
+    assert.throws(() => loadCase(id, url), (e) => e instanceof CaseError && /** @type {RegExp} */ (why).test(e.message), id);
   }
 });
